@@ -12,8 +12,9 @@ CREATE TABLE IF NOT EXISTS reservas (
     hora TIME NOT NULL,
     personas INT NOT NULL,
     notas TEXT,
-    opentable_id VARCHAR(100),
     estado ENUM('pendiente', 'confirmada', 'cancelada') DEFAULT 'pendiente',
+    mesa VARCHAR(50),
+    asientos_barra VARCHAR(100),
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -31,8 +32,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 -- Índices para optimizar búsquedas
 CREATE INDEX idx_fecha_hora ON reservas(fecha, hora);
-CREATE INDEX idx_tipo_servicio ON reservas(tipo_servicio);
 CREATE INDEX idx_estado ON reservas(estado);
+CREATE INDEX idx_mesa ON reservas(mesa);
 
 -- Insertar usuario administrador por defecto
 INSERT INTO usuarios (nombre, email, password, rol) VALUES 

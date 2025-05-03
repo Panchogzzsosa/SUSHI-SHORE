@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="shortcut icon" href="assets/img/ICON.jpg" type="image/x-icon">
     <!-- OpenTable Widget -->
     <script type="text/javascript" src="//www.opentable.com/widget/reservation/loader?rid=YOUR_RESTAURANT_ID&type=standard&theme=standard&color=1&iframe=true&domain=com&lang=es-MX&newtab=false&ot_source=Restaurant%20website"></script>
 </head>

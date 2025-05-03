@@ -19,6 +19,7 @@ $titulo = isset($titulos[$tipo_servicio]) ? $titulos[$tipo_servicio] : 'Sistema 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="shortcut icon" href="assets/img/ICON.jpg" type="image/x-icon">
     <style>
         body {
             background: var(--dark-color, #111111);
@@ -69,6 +70,7 @@ $titulo = isset($titulos[$tipo_servicio]) ? $titulos[$tipo_servicio] : 'Sistema 
             border: none;
             color: #fff;
             transition: background 0.2s;
+            margin-top: 4rem;
         }
         .reserva-form button:hover {
             background: #a81a32;
@@ -138,6 +140,16 @@ $titulo = isset($titulos[$tipo_servicio]) ? $titulos[$tipo_servicio] : 'Sistema 
                 max-width: 100%;
             }
         }
+        /* Animación minimalista para el modal de reserva */
+        .modal.fade .modal-dialog {
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(.4,0,.2,1);
+        }
+        .modal.fade.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -196,6 +208,7 @@ $titulo = isset($titulos[$tipo_servicio]) ? $titulos[$tipo_servicio] : 'Sistema 
                     <input type="hidden" name="mesa_seleccionada" id="mesa_seleccionada">
                     <input type="hidden" name="asientos_barra" id="asientos_barra">
 
+                    <div class="mb-5"></div>
                     <button type="submit" class="btn btn-primary mt-2" id="btnReservar" disabled>Reservar Mesa</button>
                 </form>
             </div>
@@ -232,7 +245,7 @@ $titulo = isset($titulos[$tipo_servicio]) ? $titulos[$tipo_servicio] : 'Sistema 
         const personas = parseInt(document.getElementById('personas').value) || 0;
         const svgWidth = 1100;
         const svgHeight = 600;
-        let svg = `<svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">`;
+        let svg = `<svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" style="background:transparent;">`;
         // Posiciones de las mesas (más separadas)
         const mesaPos = [
             {x:180, y:120}, {x:420, y:120}, // Mesas 1-2 (2p)
@@ -241,67 +254,87 @@ $titulo = isset($titulos[$tipo_servicio]) ? $titulos[$tipo_servicio] : 'Sistema 
             {x:660, y:520} // Mesa 8 (8p)
         ];
         mesas.forEach((mesa, i) => {
-            let mesaEstado = 'mesa-disponible-nueva';
-            if (ocupacion[mesa.id]) mesaEstado = 'mesa-ocupada-nueva';
-            if (personas > mesa.capacidad) mesaEstado = 'mesa-ocupada-nueva';
-            if (personas > 0 && personas <= mesa.capacidad && !ocupacion[mesa.id]) mesaEstado = 'mesa-disponible-nueva';
-            if (seleccion.mesa === mesa.id) mesaEstado = 'mesa-seleccionada-nueva';
-            // Mesa como círculo
-            let mesaRadio = 32 + mesa.capacidad * 2;
-            svg += `<g class="mesa-svg-nueva ${mesaEstado}" data-id="${mesa.id}" tabindex="0">`;
-            svg += `<circle cx="${mesaPos[i].x}" cy="${mesaPos[i].y}" r="${mesaRadio}" />`;
-            // Sillas alrededor
+            let mesaEstado = 'disponible';
+            if (ocupacion[mesa.id]) mesaEstado = 'ocupada';
+            if (personas > mesa.capacidad) mesaEstado = 'ocupada';
+            if (personas > 0 && personas <= mesa.capacidad && !ocupacion[mesa.id]) mesaEstado = 'disponible';
+            if (seleccion.mesa === mesa.id) mesaEstado = 'seleccionada';
+            // Colores minimalistas
+            let color = mesaEstado==='disponible' ? '#2ecc40' : mesaEstado==='ocupada' ? '#c41e3a' : '#2986f5';
+            // Mesa como cuadrado
+            let mesaLado = 48 + mesa.capacidad * 6;
+            let x = mesaPos[i].x - mesaLado/2;
+            let y = mesaPos[i].y - mesaLado/2;
+            svg += `<g class="mesa-svg-nueva" data-id="${mesa.id}" tabindex="0" style="cursor:pointer;">`;
+            svg += `<rect x="${x}" y="${y}" width="${mesaLado}" height="${mesaLado}" rx="10" fill="${color}" />`;
+            // Sillas como rectángulos minimalistas
+            let sillas = mesa.capacidad;
             let anguloBase = -90;
-            for(let s=0; s<mesa.capacidad; s++) {
-                let angulo = anguloBase + (360/mesa.capacidad)*s;
+            for(let s=0; s<sillas; s++) {
+                let angulo = anguloBase + (360/sillas)*s;
                 let rad = angulo * Math.PI / 180;
-                let sillaX = mesaPos[i].x + Math.cos(rad)*(mesaRadio+22);
-                let sillaY = mesaPos[i].y + Math.sin(rad)*(mesaRadio+22);
-                let sillaEstado = mesaEstado;
-                svg += `<circle cx="${sillaX}" cy="${sillaY}" r="12" class="${
-                    mesaEstado==='mesa-ocupada-nueva' ? 'asiento-ocupado-nuevo' :
-                    mesaEstado==='mesa-seleccionada-nueva' ? 'asiento-seleccionado-nuevo' :
-                    'asiento-disponible-nuevo'}" />`;
+                let sillaX = mesaPos[i].x + Math.cos(rad)*(mesaLado/2+18) - 8;
+                let sillaY = mesaPos[i].y + Math.sin(rad)*(mesaLado/2+18) - 8;
+                let rot = angulo+90;
+                svg += `<rect x="${sillaX}" y="${sillaY}" width="16" height="16" rx="4" fill="#fff" stroke="#bbb" stroke-width="1.5" transform="rotate(${rot},${sillaX+8},${sillaY+8})" />`;
             }
-            // Solo el nombre de la mesa
-            svg += `<text x="${mesaPos[i].x}" y="${mesaPos[i].y+6}" text-anchor="middle" class="mesa-label-nueva">${mesa.nombre}</text>`;
+            // Número de mesa minimalista
+            svg += `<text x="${mesaPos[i].x}" y="${mesaPos[i].y+7}" text-anchor="middle" font-size="1.3rem" fill="#222" font-family="'Montserrat',sans-serif" font-weight="600">${i+1}</text>`;
             svg += `</g>`;
         });
-        // Barra (asientos individuales)
-        svg += `<g><rect x="900" y="60" width="160" height="480" rx="24" fill="#222" stroke="#fff" stroke-width="2" />`;
+        // Barra minimalista: línea blanca y puntos
+        svg += `<g>`;
+        svg += `<rect x="900" y="60" width="160" height="480" rx="24" fill="none" stroke="#fff" stroke-width="2" />`;
         for(let i=0; i<barra.capacidad; i++) {
-            let estado = 'asiento-disponible-nuevo';
-            if (ocupacion.barra && ocupacion.barra.includes(i)) estado = 'asiento-ocupado-nuevo';
-            if (seleccion.asientosBarra.includes(i)) estado = 'asiento-seleccionado-nuevo';
-            svg += `<circle class="asiento-barra-nuevo ${estado}" data-idx="${i}" cx="980" cy="110" r="18" transform="translate(0,${i*42})" />`;
-            svg += `<text x="980" y="115" transform="translate(0,${i*42})" text-anchor="middle" class="mesa-capacidad-nueva" font-size="0.8rem">${i+1}</text>`;
+            let estado = 'disponible';
+            if (ocupacion.barra && ocupacion.barra.includes(i)) estado = 'ocupada';
+            if (seleccion.asientosBarra.includes(i)) estado = 'seleccionada';
+            let color = estado==='disponible' ? '#2ecc40' : estado==='ocupada' ? '#c41e3a' : '#2986f5';
+            svg += `<circle class="asiento-barra-nuevo" data-idx="${i}" cx="980" cy="110" r="13" transform="translate(0,${i*42})" fill="${color}" style="cursor:pointer;" />`;
+            svg += `<text x="980" y="115" transform="translate(0,${i*42})" text-anchor="middle" font-size="0.8rem" fill="#fff" font-family="'Montserrat',sans-serif">${i+1}</text>`;
         }
-        svg += `<text x="980" y="570" text-anchor="middle" class="mesa-label-nueva">Barra</text>`;
-        svg += `<text x="980" y="590" text-anchor="middle" class="mesa-capacidad-nueva">10 asientos</text>`;
+        svg += `<text x="980" y="570" text-anchor="middle" font-size="1rem" fill="#fff" font-family="'Montserrat',sans-serif">Barra</text>`;
+        svg += `<text x="980" y="590" text-anchor="middle" font-size="0.8rem" fill="#fff" font-family="'Montserrat',sans-serif">10 asientos</text>`;
         svg += `</g>`;
         svg += `</svg>`;
         document.getElementById('svgMesasContainerNuevo').innerHTML = svg;
     }
 
-    // --- Simulación de ocupación (esto debe venir del backend) ---
-    function simularOcupacion() {
-        // Aquí deberías hacer una petición AJAX al backend con fecha/hora
-        // Simulación: mesa3 y mesa6 ocupadas, barra asientos 2,3,4 ocupados
-        ocupacion = {
-            mesa3: true,
-            mesa6: true,
-            barra: [2,3,4]
-        };
+    // --- Ocupación real desde backend ---
+    async function cargarOcupacionReal() {
+        const fecha = document.getElementById('fecha').value;
+        const hora = document.getElementById('hora').value;
+        if (!fecha || !hora) {
+            ocupacion = {};
+            renderSVGPlanoNuevo();
+            return;
+        }
+        try {
+            const response = await fetch('mesas_ocupadas.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fecha, hora })
+            });
+            const data = await response.json();
+            ocupacion = {
+                ...Object.fromEntries((data.mesas||[]).map(m=>[m,true])),
+                barra: data.barra || []
+            };
+            renderSVGPlanoNuevo();
+        } catch (e) {
+            ocupacion = {};
+            renderSVGPlanoNuevo();
+        }
     }
 
     // --- Lógica de selección ---
     document.addEventListener('change', function(e) {
         if(['fecha','hora','personas'].includes(e.target.id)) {
             seleccion = { mesa: null, asientosBarra: [] };
-            simularOcupacion(); // Reemplazar por consulta real
-            renderSVGPlanoNuevo();
+            cargarOcupacionReal();
             document.getElementById('mesa_seleccionada').value = '';
             document.getElementById('asientos_barra').value = '';
+            actualizarBotonReserva();
         }
     });
 
@@ -315,6 +348,7 @@ $titulo = isset($titulos[$tipo_servicio]) ? $titulos[$tipo_servicio] : 'Sistema 
                 document.getElementById('mesa_seleccionada').value = mesaId;
                 document.getElementById('asientos_barra').value = '';
                 renderSVGPlanoNuevo();
+                actualizarBotonReserva();
             }
         }
         if(e.target.classList.contains('asiento-barra-nuevo')) {
@@ -332,11 +366,12 @@ $titulo = isset($titulos[$tipo_servicio]) ? $titulos[$tipo_servicio] : 'Sistema 
             document.getElementById('mesa_seleccionada').value = '';
             document.getElementById('asientos_barra').value = seleccion.asientosBarra.join(',');
             renderSVGPlanoNuevo();
+            actualizarBotonReserva();
         }
     });
 
     // Inicializar
-    simularOcupacion();
+    cargarOcupacionReal();
     renderSVGPlanoNuevo();
 
     flatpickr("#fecha", {
@@ -344,6 +379,124 @@ $titulo = isset($titulos[$tipo_servicio]) ? $titulos[$tipo_servicio] : 'Sistema 
         dateFormat: "Y-m-d",
         locale: "es"
     });
+
+    // --- Habilitar el botón de reserva solo si hay selección válida ---
+    function actualizarBotonReserva() {
+        const nombre = document.getElementById('nombre').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const telefono = document.getElementById('telefono').value.trim();
+        const fecha = document.getElementById('fecha').value.trim();
+        const hora = document.getElementById('hora').value.trim();
+        const personas = parseInt(document.getElementById('personas').value) || 0;
+        const mesaSeleccionada = document.getElementById('mesa_seleccionada').value;
+        const asientosBarra = document.getElementById('asientos_barra').value;
+        const btn = document.getElementById('btnReservar');
+        // Validar todos los campos obligatorios
+        const camposLlenos = nombre && email && telefono && fecha && hora && personas > 0;
+        const seleccionValida = (mesaSeleccionada && personas > 0) || (asientosBarra && asientosBarra.split(',').length === personas);
+        if (camposLlenos && seleccionValida) {
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+        }
+    }
+
+    // Llama a esta función cada vez que se actualiza la selección
+    document.addEventListener('change', actualizarBotonReserva);
+    document.getElementById('svgMesasContainerNuevo').addEventListener('click', actualizarBotonReserva);
+
+    // Mostrar modal al reservar y enviar datos a la base de datos
+    let reservaEnviada = false;
+    document.getElementById('formReserva').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (reservaEnviada) return;
+        reservaEnviada = true;
+        
+        const btn = document.getElementById('btnReservar');
+        btn.disabled = true; // Deshabilita para evitar doble envío
+        // Obtener datos del formulario
+        const nombre = document.getElementById('nombre').value;
+        const email = document.getElementById('email').value;
+        const telefono = document.getElementById('telefono').value;
+        const fecha = document.getElementById('fecha').value;
+        const hora = document.getElementById('hora').value;
+        const personas = document.getElementById('personas').value;
+        const notas = document.getElementById('notas').value;
+        const mesa = document.getElementById('mesa_seleccionada').value;
+        const asientosBarra = document.getElementById('asientos_barra').value;
+        // Enviar datos por AJAX
+        try {
+            const response = await fetch('procesar_reserva.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre, email, telefono, fecha, hora, personas, notas,
+                    mesa: mesa,
+                    asientos_barra: asientosBarra
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Mostrar info en el modal
+                document.getElementById('modalNombre').innerText = nombre;
+                document.getElementById('modalEmail').innerText = email;
+                document.getElementById('modalTelefono').innerText = telefono;
+                document.getElementById('modalFecha').innerText = fecha;
+                document.getElementById('modalHora').innerText = hora;
+                document.getElementById('modalPersonas').innerText = personas;
+                document.getElementById('modalNotas').innerText = notas;
+                if (mesa) {
+                    document.getElementById('modalMesa').innerText = mesa;
+                } else if (asientosBarra) {
+                    document.getElementById('modalMesa').innerText = 'Barra (asientos: ' + asientosBarra.split(',').map(n => parseInt(n)+1).join(', ') + ')';
+                } else {
+                    document.getElementById('modalMesa').innerText = '-';
+                }
+                // Mostrar el modal
+                const modal = new bootstrap.Modal(document.getElementById('modalReserva'));
+                modal.show();
+                // Limpiar el formulario y selección
+                this.reset();
+                document.getElementById('mesa_seleccionada').value = '';
+                document.getElementById('asientos_barra').value = '';
+                seleccion = { mesa: null, asientosBarra: [] };
+                renderSVGPlanoNuevo();
+                actualizarBotonReserva();
+            } else {
+                alert(data.error || 'Error al procesar la reserva.');
+                btn.disabled = false; // Solo vuelve a habilitar si hay error
+                reservaEnviada = false;
+            }
+        } catch (err) {
+            alert('Error de conexión. Intenta de nuevo.');
+            btn.disabled = false;
+            reservaEnviada = false;
+        }
+    });
     </script>
+    <!-- Modal de confirmación de reserva -->
+    <div class="modal fade" id="modalReserva" tabindex="-1" aria-labelledby="modalReservaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="modalReservaLabel">¡Reserva realizada con éxito!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Nombre:</strong> <span id="modalNombre"></span></p>
+                    <p><strong>Email:</strong> <span id="modalEmail"></span></p>
+                    <p><strong>Teléfono:</strong> <span id="modalTelefono"></span></p>
+                    <p><strong>Fecha:</strong> <span id="modalFecha"></span></p>
+                    <p><strong>Hora:</strong> <span id="modalHora"></span></p>
+                    <p><strong>Personas:</strong> <span id="modalPersonas"></span></p>
+                    <p><strong>Mesa/Asientos:</strong> <span id="modalMesa"></span></p>
+                    <p class="mb-0"><strong>Notas:</strong> <span id="modalNotas"></span></p>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html> 

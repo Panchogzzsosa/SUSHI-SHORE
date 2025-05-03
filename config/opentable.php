@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Configuración de la API de OpenTable
 define('OPENTABLE_API_KEY', 'TU_API_KEY_AQUI');
 define('OPENTABLE_RESTAURANT_ID', 'TU_RESTAURANT_ID_AQUI');

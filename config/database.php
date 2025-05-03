@@ -1,6 +1,6 @@
 <?php
 $host = 'localhost';
-$dbname = 'sistema_reservas';
+$dbname = 'sushi_delight';
 $username = 'root';
 $password = '';
 

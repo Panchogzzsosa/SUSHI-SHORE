@@ -19,15 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
         calendar.render();
     }
 
-    // Manejar el formulario de reserva
-    const formReserva = document.getElementById('formReserva');
-    if (formReserva) {
-        formReserva.addEventListener('submit', function(e) {
-            e.preventDefault();
-            procesarReserva();
-        });
-    }
-
     // Verificar disponibilidad cuando cambia la fecha o hora
     const fechaInput = document.getElementById('fecha');
     const horaInput = document.getElementById('hora');
@@ -76,42 +67,6 @@ function verificarDisponibilidad() {
     .catch(error => {
         console.error('Error:', error);
         mostrarError('Error al verificar disponibilidad');
-    });
-}
-
-function procesarReserva() {
-    const formData = {
-        nombre: document.getElementById('nombre').value,
-        email: document.getElementById('email').value,
-        telefono: document.getElementById('telefono').value,
-        fecha: document.getElementById('fecha').value,
-        hora: document.getElementById('hora').value,
-        personas: document.getElementById('personas').value,
-        notas: document.getElementById('notas').value
-    };
-
-    fetch('procesar_reserva.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            mostrarError(data.error);
-            return;
-        }
-
-        mostrarMensaje('¡Reserva realizada con éxito!', 'success');
-        setTimeout(() => {
-            window.location.href = 'index.php';
-        }, 2000);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        mostrarError('Error al procesar la reserva');
     });
 }
 
